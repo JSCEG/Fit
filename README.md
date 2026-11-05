@@ -64,6 +64,12 @@ Para servir desde una subruta, el build acepta la variable `APP_BASE`:
 APP_BASE=/fit/ npm run build
 ```
 
+Para empaquetar la app en un solo HTML autocontenido (útil para visores que no
+sirven archivos sueltos), usa `VITE_EMBEBIDO=1 npm run build` y mete el CSS y el
+JS de `dist/assets/` dentro del HTML. Esa bandera omite el service worker y los
+botones de descarga, que no funcionan en un visor restringido; la copia al
+portapapeles sigue disponible como respaldo.
+
 ## Tus datos
 
 Todo vive en el navegador donde lo usas. No hay servidor, no se envía nada a

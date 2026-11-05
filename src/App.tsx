@@ -38,7 +38,7 @@ export function App() {
   }, [])
 
   function irA(id: string) {
-    window.location.hash = `/${id}`
+    window.location.hash = id
     setPagina(id as PaginaId)
     window.scrollTo({ top: 0 })
   }

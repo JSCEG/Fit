@@ -74,13 +74,15 @@ button, input, select, textarea {
 
 .cabecera {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding-block: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
   background: color-mix(in srgb, var(--fondo) 88%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--borde);
@@ -102,7 +104,9 @@ button, input, select, textarea {
   width: 100%;
   max-width: 940px;
   margin: 0 auto;
-  padding: 16px;
+  padding-block: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -117,7 +121,9 @@ button, input, select, textarea {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 2px;
-  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  padding-block: 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(6px, env(safe-area-inset-left, 0px));
+  padding-right: max(6px, env(safe-area-inset-right, 0px));
   background: color-mix(in srgb, var(--fondo-2) 94%, transparent);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--borde);
@@ -170,7 +176,7 @@ button, input, select, textarea {
 
 @media (min-width: 720px) {
   .rejilla.cuatro { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .contenido { padding: 24px 16px; }
+  .contenido { padding-block: 24px; }
   .nav { grid-template-columns: repeat(6, minmax(0, 110px)); justify-content: center; }
 }
 

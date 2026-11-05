@@ -24,6 +24,11 @@ export function Ajustes() {
   const { estado, despachar, reiniciar } = useApp()
   const { perfil, ajustes } = estado
   const [mensaje, setMensaje] = useState<string | null>(null)
+  const [textoManual, setTextoManual] = useState<string | null>(null)
+  const [confirmandoBorrado, setConfirmandoBorrado] = useState(false)
+
+  // Los visores embebidos bloquean las descargas: ahi solo se ofrece copiar.
+  const hayDescargas = !import.meta.env.VITE_EMBEBIDO
 
   const peso = useMemo(() => pesoVigente(estado.pesos, perfil, hoyISO()), [estado.pesos, perfil])
   const tmb = Math.round(calcularTMB(perfil, peso))
@@ -45,6 +50,21 @@ export function Ajustes() {
     a.download = nombre
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  /**
+   * Alternativa a la descarga: hay entornos que la bloquean sin avisar.
+   * Si tampoco hay portapapeles, se muestra el texto para copiarlo a mano.
+   */
+  async function copiar(contenido: string, etiqueta: string) {
+    setTextoManual(null)
+    try {
+      await navigator.clipboard.writeText(contenido)
+      setMensaje(`${etiqueta} copiado al portapapeles.`)
+    } catch {
+      setTextoManual(contenido)
+      setMensaje(`No se pudo copiar solo. Selecciona el texto de abajo y copialo.`)
+    }
   }
 
   function importar(archivo: File) {
@@ -294,26 +314,59 @@ export function Ajustes() {
 
       <Tarjeta titulo="Tus datos" sub="Todo se guarda solo en este navegador">
         {mensaje && <Aviso>{mensaje}</Aviso>}
-        <div className="acciones" style={{ marginTop: mensaje ? 12 : 0 }}>
-          <button
-            className="btn"
-            onClick={() => descargar(`fit-respaldo-${fecha}.json`, exportarJSON(estado), 'application/json')}
-          >
-            Exportar respaldo (JSON)
+        {hayDescargas && (
+          <div className="acciones" style={{ marginTop: mensaje ? 12 : 0 }}>
+            <button
+              className="btn"
+              onClick={() => descargar(`fit-respaldo-${fecha}.json`, exportarJSON(estado), 'application/json')}
+            >
+              Descargar respaldo (JSON)
+            </button>
+            <button
+              className="btn"
+              onClick={() => descargar(`fit-comidas-${fecha}.csv`, exportarComidasCSV(estado), 'text/csv')}
+            >
+              Comidas (CSV)
+            </button>
+            <button
+              className="btn"
+              onClick={() => descargar(`fit-pesos-${fecha}.csv`, exportarPesosCSV(estado), 'text/csv')}
+            >
+              Pesos (CSV)
+            </button>
+          </div>
+        )}
+
+        <div className="acciones" style={{ marginTop: hayDescargas || mensaje ? 8 : 0 }}>
+          <button className="btn fantasma" onClick={() => copiar(exportarJSON(estado), 'Respaldo')}>
+            Copiar respaldo (JSON)
           </button>
-          <button
-            className="btn"
-            onClick={() => descargar(`fit-comidas-${fecha}.csv`, exportarComidasCSV(estado), 'text/csv')}
-          >
-            Comidas (CSV)
+          <button className="btn fantasma" onClick={() => copiar(exportarComidasCSV(estado), 'CSV de comidas')}>
+            Copiar comidas
           </button>
-          <button
-            className="btn"
-            onClick={() => descargar(`fit-pesos-${fecha}.csv`, exportarPesosCSV(estado), 'text/csv')}
-          >
-            Pesos (CSV)
+          <button className="btn fantasma" onClick={() => copiar(exportarPesosCSV(estado), 'CSV de pesos')}>
+            Copiar pesos
           </button>
         </div>
+        <p style={{ color: 'var(--texto-3)', fontSize: '0.76rem', marginTop: 8 }}>
+          {hayDescargas
+            ? 'Si la descarga no funciona donde estes usando la app, copia el respaldo y pegalo en un archivo de texto.'
+            : 'Aqui las descargas estan bloqueadas: copia el respaldo y pegalo en un archivo de texto para guardarlo.'}
+        </p>
+
+        {textoManual && (
+          <div className="campo" style={{ marginTop: 12 }}>
+            <label htmlFor="s-manual-texto">Copia este contenido</label>
+            <textarea
+              id="s-manual-texto"
+              readOnly
+              rows={6}
+              value={textoManual}
+              onFocus={(e) => e.currentTarget.select()}
+              style={{ fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: '0.75rem' }}
+            />
+          </div>
+        )}
 
         <div className="campo" style={{ marginTop: 14 }}>
           <label htmlFor="s-importar">Importar respaldo JSON</label>
@@ -334,16 +387,26 @@ export function Ajustes() {
 
         <div className="separador" style={{ margin: '14px 0' }} />
 
-        <button
-          className="btn peligro"
-          onClick={() => {
-            if (confirm('Se borraran todos tus registros de este navegador. Esta accion no se puede deshacer.')) {
-              reiniciar()
-            }
-          }}
-        >
-          Borrar todos mis datos
-        </button>
+        {confirmandoBorrado ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Aviso tono="alerta">
+              Se borraran tus {estado.comidas.length} comidas y {estado.pesos.length} pesos de
+              este navegador. No se puede deshacer. Exporta un respaldo antes si lo necesitas.
+            </Aviso>
+            <div className="acciones">
+              <button className="btn peligro" onClick={reiniciar}>
+                Si, borrar todo
+              </button>
+              <button className="btn fantasma" onClick={() => setConfirmandoBorrado(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button className="btn peligro" onClick={() => setConfirmandoBorrado(true)}>
+            Borrar todos mis datos
+          </button>
+        )}
       </Tarjeta>
     </>
   )
